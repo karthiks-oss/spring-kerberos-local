@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:beans="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<http entry-point-ref="spnegoEntryPoint">
+		<intercept-url pattern="/secure/**" access="IS_AUTHENTICATED_FULLY" />
+		<custom-filter ref="localhostAuthenticationProcessingFilter" before="BASIC_AUTH_FILTER" />
+		<custom-filter ref="spnegoAuthenticationProcessingFilter" position="BASIC_AUTH_FILTER" />
+	</http>
+	
+	<beans:bean id="spnegoEntryPoint"
+		class="org.springframework.security.extensions.kerberos.web.SpnegoEntryPoint" />
+	
+	<beans:bean id="spnegoAuthenticationProcessingFilter"
+		class="org.springframework.security.extensions.kerberos.web.SpnegoAuthenticationProcessingFilter">
+		<beans:property name="authenticationManager" ref="authenticationManager" />
+	</beans:bean>
+	
+	<beans:bean id="localhostAuthenticationProcessingFilter"
+		class="com.seenukarthi.spring.security.kerberos.localhost.LocalhostAuthenticationFilter">
+		<beans:property name="authenticationManager" ref="authenticationManager" />
+	</beans:bean>
+	
+	<authentication-manager alias="authenticationManager">
+		<authentication-provider ref="localhostAuthenticationProvider" />
+		<authentication-provider ref="kerberosServiceAuthenticationProvider" />
+	</authentication-manager>
+	
+	<beans:bean id="kerberosServiceAuthenticationProvider"
+		class="org.springframework.security.extensions.kerberos.KerberosServiceAuthenticationProvider">
+		<beans:property name="ticketValidator">
+			<beans:bean
+				class="org.springframework.security.extensions.kerberos.SunJaasKerberosTicketValidator">
+				<beans:property name="servicePrincipal" value="service account name" />
+				<beans:property name="keyTabLocation" value="key tab file location" />
+				<beans:property name="debug" value="true" />
+			</beans:bean>
+		</beans:property>
+		<beans:property name="userDetailsService" ref="dummyUserDetailsService" />
+	</beans:bean>
+	
+	<beans:bean id="localhostAuthenticationProvider"
+		class="com.seenukarthi.spring.security.kerberos.localhost.LocalhostAuthenticationProvider">
+		<beans:property name="userDetailsService" ref="dummyUserDetailsService" />
+	</beans:bean>
+	
+	<beans:bean
+		class="org.springframework.security.extensions.kerberos.GlobalSunJaasKerberosConfig">
+		<beans:property name="debug" value="true" />
+		<beans:property name="krbConfLocation" value="krbconf file path"/>
+	</beans:bean>
+	
+	<beans:bean id="dummyUserDetailsService"
+		class="com.seenukarthi.spring.security.core.userdetails.DummyUserDetailsService" />
+</beans:beans>

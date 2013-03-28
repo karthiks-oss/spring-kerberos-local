@@ -1,0 +1,11 @@
+
+.metadata
+*/target/*
+*/target/**
+target/
+Servers/
+.classpath
+.springBeans
+.project
+.DS_Store
+.settings/
